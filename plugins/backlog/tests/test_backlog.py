@@ -40,15 +40,18 @@ class BacklogTests(unittest.TestCase):
     def history(self):
         return [json.loads(line) for line in (self.root / "backlog" / "history.jsonl").read_text().splitlines()]
 
-    def test_init_creates_layout_and_passes_check(self):
+    def test_init_creates_layout_without_an_index_and_passes_check(self):
         self.assertTrue((self.root / "backlog" / "history.jsonl").exists())
-        self.assertIn("None.", (self.root / "BACKLOG.md").read_text())
+        self.assertFalse((self.root / "BACKLOG.md").exists())
         self.run_cli("check")
 
     def test_add_assigns_next_id_and_lists_item(self):
         self.assertEqual(self.run_cli("add", "--slug", "utf8-export", stdin=ITEM).split()[0], "1")
         self.assertEqual(self.run_cli("add", "--slug", "second", stdin=ITEM).split()[0], "2")
-        self.assertIn("[1 The export writes UTF-8.](backlog/1-utf8-export.md)", (self.root / "BACKLOG.md").read_text())
+        listing = self.run_cli("list")
+        self.assertIn("1  open     The export writes UTF-8.", listing)
+        self.assertIn("2  open     The export writes UTF-8.", listing)
+        self.assertFalse((self.root / "BACKLOG.md").exists())
         self.run_cli("check")
 
     def test_add_refuses_item_without_done_when_or_bad_slug(self):
@@ -62,9 +65,9 @@ class BacklogTests(unittest.TestCase):
         self.run_cli("add", "--slug", "b", stdin=ITEM.replace("**Done when**", "**Depends on:** 1\n\n**Done when**"))
         self.run_cli("block", "1", "an API key from the platform team")
         self.run_cli("next", code=1)
-        md = (self.root / "BACKLOG.md").read_text()
-        self.assertIn("): an API key from the platform team", md)
-        self.assertIn("(after 1)", md)
+        listing = self.run_cli("list")
+        self.assertIn("1  blocked  The export writes UTF-8.\n      blocked: an API key from the platform team", listing)
+        self.assertIn("2  waiting  The export writes UTF-8.\n      waits for: 1", listing)
         self.run_cli("unblock", "1")
         self.assertEqual(self.run_cli("next").split()[0], "1")
         self.assertEqual((self.root / "backlog" / "1-a.md").read_text(), ITEM)
@@ -121,13 +124,42 @@ class BacklogTests(unittest.TestCase):
         for expected in ("does not end with a newline", "must be the line number", "notes.txt", "already finished"):
             self.assertIn(expected, out)
 
-    def test_check_finds_hand_edited_list(self):
+    def test_check_finds_a_hand_edited_index(self):
+        self.run_cli("init", "--index")
         self.run_cli("add", "--slug", "a", stdin=ITEM)
         md = self.root / "BACKLOG.md"
         md.write_text(md.read_text().replace("- [1 ", "- [7 "))
         self.assertIn("out of date", self.run_cli("check", code=1))
         self.run_cli("render")
         self.run_cli("check")
+
+    def test_an_index_that_exists_is_kept_current_by_every_command(self):
+        self.run_cli("init", "--index")
+        md = self.root / "BACKLOG.md"
+        self.assertIn("None.", md.read_text())
+        self.run_cli("add", "--slug", "a", stdin=ITEM)
+        self.assertIn("[1 The export writes UTF-8.](backlog/1-a.md)", md.read_text())
+        self.run_cli("block", "1", "an API key")
+        self.assertIn("): an API key", md.read_text())
+        self.run_cli("unblock", "1")
+        self.run_cli("check")
+
+    def test_without_an_index_render_does_nothing_and_says_so(self):
+        err = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            self.assertEqual(backlog.main(["-C", str(self.root), "render"]), 0)
+        self.assertIn("no BACKLOG.md index to render", err.getvalue())
+        self.assertFalse((self.root / "BACKLOG.md").exists())
+
+    def test_a_backlog_md_without_the_markers_is_an_ordinary_file(self):
+        md = self.root / "BACKLOG.md"
+        md.write_text("# My own notes\n\nNothing generated here.\n")
+        self.run_cli("add", "--slug", "a", stdin=ITEM)
+        self.run_cli("render")
+        self.run_cli("check")
+        self.assertEqual(md.read_text(), "# My own notes\n\nNothing generated here.\n")
+        self.run_cli("init", "--index", code=2)  # asked for an index there: refused, nothing overwritten
+        self.assertEqual(md.read_text(), "# My own notes\n\nNothing generated here.\n")
 
     def test_render_keeps_free_text_around_the_block(self):
         md = self.root / "BACKLOG.md"

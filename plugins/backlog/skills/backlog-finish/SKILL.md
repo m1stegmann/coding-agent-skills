@@ -7,7 +7,7 @@ description: Closes a backlog item after every Done-when bullet is verified agai
 
 An item is finished completely or not at all. Other agents trust a `completed` line without checking it again, so a wrong one costs more than an open item.
 
-The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), records the item, deletes its file and updates `BACKLOG.md`. Never edit `history.jsonl` or `BACKLOG.md` by hand.
+The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), records the item and deletes its file (and refreshes a `BACKLOG.md` index if the repository keeps one). Never edit `history.jsonl` by hand, nor the generated list of an index.
 
 ## Steps
 

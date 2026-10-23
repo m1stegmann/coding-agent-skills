@@ -1,6 +1,6 @@
 {
   "name": "backlog",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A file-based backlog that coding agents keep: items with checkable Done-when bullets, decisions, verified finishing",
   "author": { "name": "Michael Stegmann" },
   "repository": "https://github.com/m1stegmann/coding-agent-skills",

@@ -4,10 +4,11 @@
 Layout, at the repository root:
     backlog/<id>-<slug>.md   one open item per file
     backlog/history.jsonl    append-only: finished items, decisions, corrections
-    BACKLOG.md               free text plus a generated block (blocked and open items)
+    BACKLOG.md               optional index: free text plus a generated list of blocked and open items
+                             (`backlog init --index` creates it; `backlog list` shows the same without a file)
 
 Agents change the backlog only through this script, never by editing history.jsonl or the
-generated block by hand. `backlog <command> --help` describes each command.
+generated list by hand. `backlog <command> --help` describes each command.
 Exit codes: 0 ok, 1 nothing to do (`next`) or problems found (`check`), 2 error.
 """
 from __future__ import annotations
@@ -208,14 +209,27 @@ def split_backlog_md(text: str) -> tuple[str, str, str] | None:
     return text[:start], text[start:end + len(END)], text[end + len(END):]
 
 
-def write_backlog_md(root: pathlib.Path) -> None:
+def write_backlog_md(root: pathlib.Path, create: bool = False) -> bool:
+    """Refreshes the generated list of the optional BACKLOG.md index; returns whether there is one.
+
+    A BACKLOG.md without the markers is an ordinary file and is left alone. With `create`, a missing file is
+    written, and a file without the markers is an error (the caller asked for an index there).
+    """
     path = root / "BACKLOG.md"
-    parts = split_backlog_md(path.read_text(encoding="utf-8")) if path.exists() else (INTRO + "\n", "", "\n")
-    if parts is None:
-        raise BacklogError("BACKLOG.md has no generated block; add a line `<!-- backlog:start -->` and a line "
-                           "`<!-- backlog:end -->` where the lists go (remove the old lists), then run `backlog render`")
-    before, _, after = parts
+    if path.exists():
+        parts = split_backlog_md(path.read_text(encoding="utf-8"))
+        if parts is None:
+            if create:
+                raise BacklogError("BACKLOG.md exists without the generated list; add a line `<!-- backlog:start -->` and a line "
+                                   "`<!-- backlog:end -->` where the lists go (remove the old lists), then run `backlog render`")
+            return False
+        before, _, after = parts
+    elif create:
+        before, after = INTRO + "\n", "\n"
+    else:
+        return False
     path.write_text(before + render_block(root) + after, encoding="utf-8")
+    return True
 
 
 def state(item: Item, done: set[int]) -> str:
@@ -241,7 +255,8 @@ def cmd_init(args) -> int:
         root = pathlib.Path(args.C).resolve()
     (root / "backlog").mkdir(exist_ok=True)
     history_path(root).touch()
-    write_backlog_md(root)
+    if args.index:
+        write_backlog_md(root, create=True)
     print(f"backlog ready in {root}")
     return 0
 
@@ -272,6 +287,11 @@ def cmd_list(args) -> int:
         print(json.dumps([item_json(i, done) for i in items], ensure_ascii=False, indent=1))
     for item in [] if args.json else items:
         print(f"{item.id:>4}  {state(item, done):<8} {item.title}")
+        if item.blocked:
+            print(f"      blocked: {item.blocked}")
+        waits = [d for d in item.depends if d not in done]
+        if waits:
+            print(f"      waits for: {', '.join(map(str, waits))}")
     return 0
 
 
@@ -416,7 +436,9 @@ def cmd_part(args) -> int:
 def cmd_render(args) -> int:
     root = find_root(args.C)
     with locked(root):
-        write_backlog_md(root)
+        if not write_backlog_md(root):
+            print("no BACKLOG.md index to render (it is optional; `backlog init --index` creates one). "
+                  "`backlog list` shows the open items.", file=sys.stderr)
     return 0
 
 
@@ -475,10 +497,8 @@ def cmd_check(args) -> int:
             problems.append(f"{item.rel}: depends on itself")
     md = root / "BACKLOG.md"
     parts = split_backlog_md(md.read_text(encoding="utf-8")) if md.exists() else None
-    if parts is None:
-        problems.append("BACKLOG.md: missing, or without the generated block")
-    elif not problems and parts[1] != render_block(root):
-        problems.append("BACKLOG.md: the generated block is out of date (run `backlog render`)")
+    if parts is not None and not problems and parts[1] != render_block(root):  # the index is optional, a stale one is not
+        problems.append("BACKLOG.md: the generated list is out of date (run `backlog render`)")
     for problem in problems:
         print(problem)
     if not problems:
@@ -496,7 +516,8 @@ def main(argv: list[str] | None = None) -> int:
         p.set_defaults(func=func)
         return p
 
-    command("init", cmd_init, "create backlog/, history.jsonl and BACKLOG.md at the git root (keeps what exists)")
+    p = command("init", cmd_init, "create backlog/ and history.jsonl at the git root (keeps what exists); --index also creates BACKLOG.md")
+    p.add_argument("--index", action="store_true", help="also create the optional BACKLOG.md index with the generated list")
     p = command("add", cmd_add, "add an item: Markdown on stdin or --file; prints the new id and path")
     p.add_argument("--slug", required=True, help="short English name, e.g. database-abstraction")
     p.add_argument("--file", help="item text (default: stdin)")
@@ -514,7 +535,7 @@ def main(argv: list[str] | None = None) -> int:
     p = command("unblock", cmd_block, "remove the Blocked line from an item")
     p.add_argument("id", type=int)
     p.set_defaults(reason="")
-    p = command("finish", cmd_finish, "close a verified item: append it to history.jsonl, delete its file, update BACKLOG.md")
+    p = command("finish", cmd_finish, "close a verified item: append it to history.jsonl, delete its file, refresh the BACKLOG.md index if there is one")
     p.add_argument("id", type=int)
     p.add_argument("--verification", default="-", help='JSON on stdin or in this file: [{"check", "evidence"}] '
                    'or the backlog-verifier output {"allMet", "checks": [...]}, one entry per Done-when check, in order')
@@ -532,8 +553,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
     p = command("part", cmd_part, "print the current text of a part, with corrections of it")
     p.add_argument("part")
-    command("render", cmd_render, "regenerate the lists in BACKLOG.md")
-    command("check", cmd_check, "validate history.jsonl, the item files and BACKLOG.md; exit 1 on problems")
+    command("render", cmd_render, "regenerate the lists in the optional BACKLOG.md index (nothing to do without one)")
+    command("check", cmd_check, "validate history.jsonl, the item files and the BACKLOG.md index if there is one; exit 1 on problems")
 
     args = parser.parse_args(argv)
     # The history and the items are UTF-8; the console of Windows is not (cp1252): text in and out must not depend on it.

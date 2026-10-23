@@ -7,7 +7,7 @@ description: Adds an item to the repository backlog (backlog/<id>-<slug>.md). Us
 
 The reader of an item is usually an agent in a later session or another tool, with none of the current context. Write so that it can start, and know when it is finished, from the item and the repository alone.
 
-The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), assigns the id, writes the file and updates `BACKLOG.md`. Never pick an id or edit `BACKLOG.md` yourself.
+The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), assigns the id and writes the file (and refreshes a `BACKLOG.md` index if the repository keeps one). Never pick an id yourself.
 
 ## Before writing
 
