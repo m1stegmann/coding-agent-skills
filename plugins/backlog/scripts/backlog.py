@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
 """Keeps a repository backlog consistent for coding agents (Claude Code, Grok, Copilot CLI).
 
 Layout, at the repository root:

@@ -17,9 +17,11 @@ BACKLOG.md               optional index (`backlog init --index`): free text plus
 | `skills/backlog-decide` | Records or replaces a decision part, or corrects a history line. |
 | `agents/backlog-verifier.md` | Independent, read-only check of one item; returns JSON that `backlog finish` takes. |
 
+**0.3.0:** the skills and the verifier call the CLI with `uv run` (fallback `python3`, Windows `py -3`), and `scripts/backlog.py` has a PEP 723 block. `backlog-add` asks for **Done when** commands in the repository's own cross-platform form (`uv run pytest`, `dotnet test`), `backlog-init` offers the `scripting` plugin's `scripting-init` if there is no scripting section in `AGENTS.md`, and the verifier runs Python only through `uv run`. Not yet tested in a headless session with this version.
+
 **0.2.0:** `BACKLOG.md` is optional. `backlog init` no longer creates it (`--index` does), `backlog list` shows blocked reasons and waits, and a repository that still has the generated list in a `BACKLOG.md` keeps working: the CLI refreshes and checks it as before.
 
-The skills call the CLI as `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"`, with a path relative to the skill's folder for tools that don't fill the variable in. It needs Python 3.10 or later and nothing else; on Windows it runs without a file lock (one agent at a time per checkout), and its input and output are UTF-8 whatever the console's code page is.
+The skills call the CLI as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"`, with a path relative to the skill's folder for tools that don't fill the variable in. The script carries a PEP 723 block, so `uv run` runs it isolated from any project it is called in. Without `uv` it runs with `python3` (Windows: `py -3`): it needs Python 3.10 or later and nothing else; on Windows it runs without a file lock (one agent at a time per checkout), and its input and output are UTF-8 whatever the console's code page is.
 
 A repository that wants the CLI in its own build (for example `backlog check` as a test) copies `scripts/backlog.py` in.
 

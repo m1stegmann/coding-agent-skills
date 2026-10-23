@@ -1,0 +1,9 @@
+{
+  "name": "scripting",
+  "version": "0.1.0",
+  "description": "Cross-platform scripting rules for coding agents: Python through uv, and C# file-based apps in .NET 10 solutions",
+  "author": { "name": "Michael Stegmann" },
+  "repository": "https://github.com/m1stegmann/coding-agent-skills",
+  "license": "MIT",
+  "keywords": ["uv", "python", "dotnet", "csharp", "cross-platform", "agents-md"]
+}

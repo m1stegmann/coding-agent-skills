@@ -15,6 +15,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+      - name: Plugin scripts run through uv
+        run: uv run plugins/backlog/scripts/backlog.py --help
       - name: Library rules (tools/check.py)
         run: python tools/check.py
       - name: Tests of the check

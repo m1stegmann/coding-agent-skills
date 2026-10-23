@@ -7,7 +7,7 @@ description: Closes a backlog item after every Done-when bullet is verified agai
 
 An item is finished completely or not at all. Other agents trust a `completed` line without checking it again, so a wrong one costs more than an open item.
 
-The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), records the item and deletes its file (and refreshes a `BACKLOG.md` index if the repository keeps one). Never edit `history.jsonl` by hand, nor the generated list of an index.
+The `backlog` command, `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder; without `uv` on the PATH use `python3`, on Windows `py -3`), records the item and deletes its file (and refreshes a `BACKLOG.md` index if the repository keeps one). Never edit `history.jsonl` by hand, nor the generated list of an index.
 
 ## Steps
 
@@ -26,7 +26,7 @@ The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (wri
 
 ```bash
 backlog finish 27 <<'EOF'
-[{"check": "pytest passes", "evidence": "pytest tests/test_export.py: 4 passed"},
+[{"check": "pytest passes", "evidence": "uv run pytest tests/test_export.py: 4 passed"},
  {"check": "README names the encoding", "evidence": "README.md:12 'The export writes UTF-8.'"}]
 EOF
 ```

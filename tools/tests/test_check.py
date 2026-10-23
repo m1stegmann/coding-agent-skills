@@ -48,6 +48,14 @@ class CheckTests(unittest.TestCase):
             self.assertEqual(check.main(["--root", str(self.root)]), 0)
         self.assertIn("ok: 1 plugin(s)", out.getvalue())
 
+    def test_a_script_needs_a_pep_723_block(self):
+        scripts = self.root / "plugins" / "demo" / "scripts"
+        scripts.mkdir()
+        (scripts / "tool.py").write_text("#!/usr/bin/env python3\nprint('x')\n")
+        self.assertTrue(any("PEP 723" in p for p in self.problems()))
+        (scripts / "tool.py").write_text('#!/usr/bin/env python3\n# /// script\n# requires-python = ">=3.10"\n# dependencies = []\n# ///\nprint("x")\n')
+        self.assertEqual(self.problems(), [])
+
     def test_a_top_level_bin_is_refused(self):
         (self.root / "plugins" / "demo" / "bin").mkdir()
         self.assertTrue(any("bin/" in p for p in self.problems()))

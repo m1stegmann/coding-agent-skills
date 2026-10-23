@@ -7,7 +7,7 @@ description: Sets up the file-based backlog in a repository (backlog/<id>-<slug>
 
 The backlog is kept mostly by agents. Its files are the shared memory between sessions and tools (Claude Code, Grok, Copilot CLI), so every rule an agent needs must be in the repository, not only in this skill.
 
-The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), does the bookkeeping. `backlog --help` lists the commands.
+The `backlog` command, `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder; without `uv` on the PATH use `python3`, on Windows `py -3`), does the bookkeeping. `backlog --help` lists the commands.
 
 ## Steps
 
@@ -20,9 +20,10 @@ The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (wri
    - Each standing decision or scope note becomes a part, written as the `backlog-decide` skill says.
    - Drop finished entries. If one carries a decision that still holds, record it as a part.
 4. Add the section below to `AGENTS.md` at the root (create the file if it is missing), in the language of that file. If a section on the backlog already exists, replace it. Keep the rules in the section: agents without the skills (a teammate's machine, a cloud agent) work from it alone.
-5. If `CLAUDE.md` exists and does not import `AGENTS.md`, add a line `@AGENTS.md`. If there is no `CLAUDE.md`, create it with exactly that line.
-6. Run `backlog check`. It must print `ok`.
-7. Report what was created and moved. Don't commit unless the user or the repository's workflow says so.
+5. If the repository has no section on scripts and tooling in `AGENTS.md` and the `scripting` plugin is installed, offer to run its `scripting-init` skill: the build and test commands that the **Done when** bullets and the verifier use then run through `uv` (or `dotnet`) on every platform. Don't do it unasked.
+6. If `CLAUDE.md` exists and does not import `AGENTS.md`, add a line `@AGENTS.md`. If there is no `CLAUDE.md`, create it with exactly that line.
+7. Run `backlog check`. It must print `ok`.
+8. Report what was created and moved. Don't commit unless the user or the repository's workflow says so.
 
 ## Section for AGENTS.md
 

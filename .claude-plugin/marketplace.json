@@ -7,6 +7,11 @@
       "name": "backlog",
       "source": "./plugins/backlog",
       "description": "A file-based backlog that coding agents keep: items with checkable Done-when bullets, decisions, verified finishing"
+    },
+    {
+      "name": "scripting",
+      "source": "./plugins/scripting",
+      "description": "Cross-platform scripting rules for coding agents: Python through uv, and C# file-based apps in .NET 10 solutions"
     }
   ]
 }

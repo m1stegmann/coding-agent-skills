@@ -7,7 +7,7 @@ description: Records a decision or other standing fact (architecture choice, sco
 
 Decisions are the standing rules of a repository's backlog. Agents read the current text of a part (`backlog part <slug>`) before changing behavior it covers, and they read only the latest version. Write each part so it stands alone.
 
-The `backlog` command, `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder), appends the line. Never edit `history.jsonl` by hand.
+The `backlog` command, `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/backlog.py"` (written `backlog` below; if that path is not absolute, the script is `scripts/backlog.py` two folders above this skill's folder; without `uv` on the PATH use `python3`, on Windows `py -3`), appends the line. Never edit `history.jsonl` by hand.
 
 ## Decision or item?
 

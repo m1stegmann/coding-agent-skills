@@ -16,6 +16,7 @@ NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 MAX_NAME = 64
 MAX_DESCRIPTION = 1024
 # Paths of one machine: a home directory, a Linux or macOS user folder, a Windows drive.
+PEP723_BLOCK = re.compile(r"^# /// script\n(?:#.*\n)*?# ///$", re.M)
 MACHINE_PATH = re.compile(r"(?<![\w$])~/|/home/[a-z]|/Users/[A-Za-z]|\b[A-Za-z]:\\\\?[A-Za-z]")
 
 
@@ -81,6 +82,10 @@ def check_plugin(root: pathlib.Path, plugin: pathlib.Path, skills: dict[str, str
         problems.append(f"{rel}: a top-level bin/ makes Cowork and the chat refuse the plugin; use scripts/")
     if not (plugin / "README.md").is_file():
         problems.append(f"{rel}: README.md is missing")
+
+    for script in sorted((plugin / "scripts").glob("*.py")) if (plugin / "scripts").is_dir() else []:
+        if not PEP723_BLOCK.search(script.read_text(encoding="utf-8")):
+            problems.append(f"{script.relative_to(root).as_posix()}: no PEP 723 block (# /// script ... # ///), so `uv run` cannot run it isolated")
 
     skill_dirs = sorted(p for p in (plugin / "skills").iterdir() if p.is_dir()) if (plugin / "skills").is_dir() else []
     if not skill_dirs:
