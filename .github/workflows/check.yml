@@ -1,0 +1,27 @@
+name: check
+on: [push, pull_request]
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Library rules (tools/check.py)
+        run: python tools/check.py
+      - name: Tests of the check
+        run: python -m unittest discover -s tools/tests
+      - name: Tests of every plugin
+        run: |
+          for tests in plugins/*/tests; do
+            echo "== $tests"
+            python -m unittest discover -s "$tests"
+          done

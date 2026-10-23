@@ -1,0 +1,12 @@
+{
+  "name": "coding-agent-skills",
+  "description": "Skills, agents and small tools for coding agents: Claude Code, Copilot CLI and Grok",
+  "owner": { "name": "Michael Stegmann" },
+  "plugins": [
+    {
+      "name": "backlog",
+      "source": "./plugins/backlog",
+      "description": "A file-based backlog that coding agents keep: items with checkable Done-when bullets, decisions, verified finishing"
+    }
+  ]
+}
